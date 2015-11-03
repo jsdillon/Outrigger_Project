@@ -4,7 +4,7 @@
 #########################################################################################################
 [Pipeline Settings]
 #########################################################################################################
-frequencyRange = 150 155
+frequencyRange = 150 150
 
 
 
@@ -30,12 +30,22 @@ arrayLong: 21.321317
 #BEAM SETTINGS
 antennasHaveIdenticalBeams: true
 #WARNING: For now, setting this to false will break things.
+
+FITSbeam: true
 antPolList: X Y
 skyPolList: x y
 nPointings: 1
 beamFreqList: 100 110 120 130 140 150 160 170 180 190 200
-beamFileFormat: [MainDirectory]/InstrumentData/Beams/beam_[antIndex]_[antPol]_[skyPol]_[pointIndex]_[freq].npy
-beamNSIDE = 64
+beamFileFormat: [MainDirectory]/InstrumentData/Beams/HERA-CST/HERA_DISH_paper_feed_cyl36_[freq]mhz_[skyPol]_healpix.fits
+beamNSIDE = 128
+
+#FITSbeam: false
+#antPolList: X Y
+#skyPolList: x y
+#nPointings: 1
+#beamFreqList: 100 110 120 130 140 150 160 170 180 190 200
+#beamFileFormat: [MainDirectory]/InstrumentData/Beams/beam_[antIndex]_[antPol]_[skyPol]_[pointIndex]_[freq].npy
+#beamNSIDE = 64
 
 #########################################################################################################
 [Input Data Settings]
@@ -50,11 +60,11 @@ noisePerAntennaPath: [MainDirectory]/ObservationData/AntennaNoise/AntennaNoise_[
 #POINT SOURCE CATALOG SETTINGS
 pointSourceCatalogFilename: [MainDirectory]/ObservationData/mwacs_all_b3_140206.dat
 pointSourceReferenceFreq = 180
-pointSourceBeamWeightedFluxLimitAtReferenceFreq: 1
+pointSourceBeamWeightedFluxLimitAtReferenceFreq: 100000
 #   in Jy
 
 #VISIBILITY SIMULATION SETTINGS
-simulateVisibilitiesWithGSM: true
+simulateVisibilitiesWithGSM: false
 simulateVisibilitiesWithPointSources: false
 GSMlocation: [MainDirectory]/ObservationData/GSM/
 GSMNSIDE: 32
@@ -69,21 +79,21 @@ facetRA: 60
 #50.6737
 #266.2417
 facetDec: -30.706267
-facetSize: 10
-SquareFacetInRADec: True
-MaximumAllowedAngleFromFacetCenterToPointingCenter: .3
+facetSize: 20
+SquareFacetInRADec: False
+MaximumAllowedAngleFromFacetCenterToPointingCenter: .03
 
 #MAPMAKING AND PSF SETTINGS
 mapNSIDE: 64
-PSFextensionBeyondFacetFactor = 2
+PSFextensionBeyondFacetFactor = 1
 integrationsPerSnapshot = 1
-PSFforPointSources = true
+PSFforPointSources = false
 
 #POLARIZATION SETTINGS
 makeMapOfStokesIOnly: true
 
 #OUTPUT SETTINGS
-resultsFolder = [MainDirectory]/Results_HERA19/
+resultsFolder = [MainDirectory]/Results/
 
 
 
