@@ -17,6 +17,7 @@ import scipy.sparse
 import cPickle as pickle
 
 scriptDirectory = os.path.dirname(os.path.abspath(__file__))
+os.chdir(scriptDirectory)
 
 def SortedEigensystem(matrix):
     """Returns the eigensystem of the input matrix where eigenvalues and eigenvectors are sorted by descending absolute value."""
@@ -53,6 +54,9 @@ def saveQuantitiesForArrayComparison(resultsDirectory):
 def Outrigger_Mapmaking(testCase = None):
     """This function will run either one array configuration, or all of them if testCase == None."""
     
+    if len(sys.argv) > 1: testCase = int(sys.argv[1])
+    if testCase is None: print "Now working on all array configurations.\n\n"
+
     #%% Basic HERA 331
     if testCase == 0 or testCase == None:
         HexArray()
@@ -111,6 +115,7 @@ def Outrigger_Mapmaking(testCase = None):
                                     facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1)                            
         saveQuantitiesForArrayComparison(resultsDirectory)          
 
+    if logfile: sys.stdout = sys.__stdout__ 
 
 #%%
 if __name__ == "__main__":
