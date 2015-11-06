@@ -11,7 +11,16 @@ import matplotlib.pyplot as plt
 from mpldatacursor import datacursor
 plt.close('all')
 
-def HexArray(Separation = 14.6, hexNum = 11, ditheredInriggers = False, AaronsInriggers = False, JoshsOutriggers = False, AaronsOutriggers = False, LoadHERAOutriggers = False):
+def HexArray(Separation = 14.6, hexNum = 11, 
+             ditheredInriggers = False, 
+             AaronsInriggers = False, 
+             JoshsOutriggers = False, 
+             AaronsOutriggers = False, 
+             LoadHERAOutriggers = False, 
+             redundantTriangleInriggers = False,
+             redundantPairInriggers = False,
+             redundantHexInriggers = False):
+    
     precisionFactor = 1000000        
     
     #Calculating Positions:
@@ -53,7 +62,36 @@ def HexArray(Separation = 14.6, hexNum = 11, ditheredInriggers = False, AaronsIn
             positions.append(((hexNum)/2 + 1.0/3**.5/2.0) * (right + upRight))
             positions.append(((hexNum)/2 + 1.0/3**.5/2.0) * (-right + upLeft))
 
+    #Redundant Inriggers
+    if redundantTriangleInriggers or redundantPairInriggers or redundantHexInriggers:
+        hexNumInrigger = 2
+        if hexNum % 2 == 1:            
+            inriggerCenters = [((hexNum-1)/2) * (upLeft + upRight) + upLeft + upLeft + (right + upRight)/3,       #top
+                               -((hexNum-1)/2) * (upLeft + upRight) - upLeft - upLeft - 2*(right + upRight)/3,    #bottom
+                                -(-(hexNum-1)/2 * (upRight + right) - upRight - right - (right + upRight)/3),     #top right  
+                                -((hexNum-1)/2 * (upRight + right) + upRight  + 2*(right + upRight)/3),      #bottom left
+                                (hexNum-1)/2 * (upLeft - right) + upLeft + upRight - right - 2*(right + upRight)/3,   #top left
+                                -(hexNum-1)/2 * (upLeft - right) - upLeft + right + (right + upRight)/3]        #top right
+        else:
+            inriggerCenters = [hexNum/2 * (upLeft + upRight) + upLeft  + (right + upRight)/3,       #top
+                               -hexNum/2 * (upLeft + upRight) - upLeft - 2*(right + upRight)/3,    #bottom
+                                hexNum/2 * (upRight + right)   + 2*(right + upRight)/3,      #top right
+                                -hexNum/2 * (upRight + right) - right - (right + upRight)/3,       #bottom left
+                                hexNum/2 * (upLeft - right) + upRight - right - 2*(right + upRight)/3,   #top left
+                                -hexNum/2 * (upLeft - right) - upLeft  + (right + upRight)/3]        #top right
+        for newCenter in inriggerCenters:            
+            for row in range(hexNumInrigger-1,-(hexNumInrigger),-1):
+                for col in range(2*hexNumInrigger-abs(row)-1):
+                    xPos = ((-(2*hexNumInrigger-abs(row))+2)/2.0 + col)*Separation + newCenter[0]
+                    yPos = row*Separation*3**.5/2 + newCenter[1]
+                    if redundantHexInriggers: positions.append([xPos, yPos, 0])
+                    elif redundantTriangleInriggers:
+                        if (xPos**2+yPos**2)**.5 < np.linalg.norm(newCenter) or np.array_equal(np.array([xPos, yPos, 0]), newCenter): positions.append([xPos, yPos, 0])
+                    elif redundantPairInriggers:
+                        if (xPos**2+yPos**2)**.5 < np.linalg.norm(newCenter): positions.append([xPos, yPos, 0])
+                                                    
     nCore = len(positions)
+    
     #Outriggers
     if JoshsOutriggers:
         outriggerHexNum = 3
@@ -86,10 +124,11 @@ def HexArray(Separation = 14.6, hexNum = 11, ditheredInriggers = False, AaronsIn
     baselinePairs = []
     #print "WARNING: DOUBLING UNIQUE BASELINES!!!"
     for ant1 in range(nAntennas):
- #       for ant2 in range(ant1+1,nAntennas):
-        for ant2 in range(nAntennas):
-#    for ant1 in range(nCore):
-#        for ant2 in range(nCore,nAntennas):
+        startAnt2 = ant1+1
+        if __name__ == "__main__":
+            print "WARNING: DOUBLING UNIQUE BASELINES!!!"
+            startAnt2 = 0
+        for ant2 in range(startAnt2,nAntennas):
             baselines.append((int(np.round(precisionFactor*(positions[ant1][0]-positions[ant2][0]))), int(np.round(precisionFactor*(positions[ant1][1]-positions[ant2][1]))), int(np.round(precisionFactor*(positions[ant1][2]-positions[ant2][2])))))
             baselinePairs.append((ant1, ant2))
     
@@ -133,7 +172,7 @@ def HexArray(Separation = 14.6, hexNum = 11, ditheredInriggers = False, AaronsIn
         plt.scatter(np.asarray(positions)[:,0]/Separation,np.asarray(positions)[:,1]/Separation)        
         #datacursor(display='single')
         plt.figure()        
-        plt.scatter(uniqueBaselines[:,0]/1.0/Separation, uniqueBaselines[:,1]/1.0/Separation,c=(redundancy>2 + 1))
+        plt.scatter(uniqueBaselines[:,0]/1.0/Separation, uniqueBaselines[:,1]/1.0/Separation,c=(redundancy>10 + 1),s=100)
         datacursor(display='single',formatter="x={x:.4f}\ny={y:.4f}".format)
         plt.show()
 
@@ -142,5 +181,8 @@ if __name__ == "__main__":
 #    HexArray(ditheredInriggers = True)
 #    HexArray(AaronsInriggers = False)
 #    HexArray(hexNum = 7, AaronsOutriggers = True)
-    HexArray(hexNum = 11, LoadHERAOutriggers = True)
+#    HexArray(hexNum = 11, LoadHERAOutriggers = True)
+    HexArray(hexNum = 11, redundantTriangleInriggers = True)
+#    HexArray(hexNum = 11, AaronsInriggers = True)
+    
     

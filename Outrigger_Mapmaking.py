@@ -34,12 +34,12 @@ def saveQuantitiesForArrayComparison(resultsDirectory):
     reds = oai.compute_reds(s.antennaPositions)
     redundantInfo.init_from_reds(reds, s.antennaPositions)
     AtransA = redundantInfo.At.dot(redundantInfo.At.T).toarray()
+    BtransB = redundantInfo.Bt.dot(redundantInfo.Bt.T).toarray()    
     np.save(resultsDirectory + "omniAtransA",AtransA)
     gainVariances = np.diag(np.linalg.pinv(AtransA)[0:s.nAntennas,0:s.nAntennas])
     gainVariances = gainVariances/gainVariances.min()
     np.save(resultsDirectory + "gainVariances",gainVariances)
-    np.savetxt(resultsDirectory + "nZeroEVs.txt", [len(AtransA) - np.linalg.matrix_rank(AtransA, tol=1e-10)], fmt='%.d')
-    
+    np.savetxt(resultsDirectory + "nZeroEVs.txt", [len(XtransX) - np.linalg.matrix_rank(XtransX, tol=1e-10) for XtransX in [AtransA, BtransB]], fmt='%.d')    
     coords = Geometry.Coordinates(s)
     pickle.dump(coords, open(resultsDirectory + "coords.p","wb"))    
     mapNoiseCovariance = np.dot(PSF[:,coords.mapIndexLocationsInExtendedIndexList],np.transpose(np.diag(Dmatrix)))
@@ -56,6 +56,8 @@ def Outrigger_Mapmaking(testCase = None):
     
     if len(sys.argv) > 1: testCase = int(sys.argv[1])
     if testCase is None: print "Now working on all array configurations.\n\n"
+
+
 
     #%% Basic HERA 331
     if testCase == 0 or testCase == None:
@@ -115,11 +117,53 @@ def Outrigger_Mapmaking(testCase = None):
                                     facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1)                            
         saveQuantitiesForArrayComparison(resultsDirectory)          
 
-    if logfile: sys.stdout = sys.__stdout__ 
+    #%% HERA 331 with 3 hex inriggers
+    if testCase == 7 or testCase == None:    
+        HexArray(redundantHexInriggers=True)
+        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
+        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_Hex_inriggers/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory)                   
+        saveQuantitiesForArrayComparison(resultsDirectory)          
+
+    #%% HERA 331 with 3 hex inriggers and full sky at NSIDE = 16
+    if testCase == 8 or testCase == None:    
+        HexArray(redundantHexInriggers=True)
+        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
+        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_Hex_inriggers_low_res_full_sky/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, 
+                                    facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1)                            
+        saveQuantitiesForArrayComparison(resultsDirectory)          
+        
+   
+   #%% HERA 331 with 3 hex inriggers and full sky at NSIDE = 16 with array rotation
+#    if testCase == 9 or testCase == None:    
+#        HexArray(redundantHexInriggers=True)
+#        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
+#        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_hex_inriggers_low_res_full_sky_array_rotation/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, 
+#                                    facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1, MaximumAllowedAngleFromFacetCenterToPointingCenter = 5)                            
+#        saveQuantitiesForArrayComparison(resultsDirectory)        
+
+
+    #%% HERA 331 with 3 paired inriggers and full sky at NSIDE = 16
+    if testCase == 10 or testCase == None:    
+        HexArray(redundantPairInriggers=True)
+        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
+        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_paired_inriggers_low_res_full_sky/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, 
+                                    facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1)                            
+        saveQuantitiesForArrayComparison(resultsDirectory)        
+        
+
+    #%% HERA 331 with 3 triangle inriggers and full sky at NSIDE = 16
+    if testCase == 11 or testCase == None:    
+        HexArray(redundantTriangleInriggers=True)
+        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
+        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_triangle_inriggers_low_res_full_sky/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, 
+                                    facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1)                            
+        saveQuantitiesForArrayComparison(resultsDirectory)        
+
 
 #%%
 if __name__ == "__main__":
-    Outrigger_Mapmaking()
+    Outrigger_Mapmaking(testCase = 7)
+            
 
     
     #Future Plans for this:

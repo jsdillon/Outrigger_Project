@@ -6,6 +6,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from MAPS21cm.Specifications import Specifications
 from MAPS21cm import Geometry
+import cPickle as pickle
 import scipy.constants as const
 from mpldatacursor import datacursor
 
@@ -15,8 +16,12 @@ ResultsToExamine = ['HERA331',
                     'HERA331_and_Joshs_outriggers_and_3_inriggers',
                     'HERA331_low_res_full_sky',
                     'HERA331_and_3_inriggers_low_res_full_sky',
-                    'HERA331_and_Joshs_outriggers_and_3_inriggers_low_res_full_sky']
-
+                    'HERA331_and_Joshs_outriggers_and_3_inriggers_low_res_full_sky',
+                    'HERA331_and_Hex_inriggers',
+                    'HERA331_and_Hex_inriggers_low_res_full_sky',
+                    'HERA331_and_paired_inriggers_low_res_full_sky',
+                    'HERA331_and_triangle_inriggers_low_res_full_sky']
+ResultsDict = { ResultsToExamine[n] : n for n in range(len(ResultsToExamine)) }
 
 #%%     
 def plotArray(antennaPositions):
@@ -52,17 +57,16 @@ allNZeroEVs = []
 for result in ResultsToExamine:
     print "Now loading from " + scriptDirectory + '/Results/' + result + '/'    
     resultsDirectory = scriptDirectory + '/Results/' + result + '/'
-    s, times, ps, Dmatrix, PSF, coaddedMap, pointSourcePSF = MapMats.loadAllResults(resultsDirectory)
-    allSpecs.append(s)
-    allPSFs.append(PSF)
-    allmapNoiseCovariances.append(np.load(resultsDirectory + "mapNoiseCovariance.npy"))
-    allAtransNinvAs.append(np.load(resultsDirectory + "AtransNinvA.npy"))
+    allSpecs.append(pickle.load(open(resultsDirectory + "specifications.p","rb")))
+#    allPSFs.append(np.load(resultsDirectory + "PSF.npy"))
+#    allmapNoiseCovariances.append(np.load(resultsDirectory + "mapNoiseCovariance.npy"))
+#    allAtransNinvAs.append(np.load(resultsDirectory + "AtransNinvA.npy"))
     allnoiseEvals.append(np.load(resultsDirectory + "noiseEvals.npy"))
-    allnoiseEvecs.append(np.load(resultsDirectory + "noiseEvecs.npy"))
-    allCoords.append(pickle.load(open(s.resultsFolder + "coords.p","rb")))
-    allOmniAtransA.append(np.load(resultsDirectory + "omniAtransA.npy"))
+ #   allnoiseEvecs.append(np.load(resultsDirectory + "noiseEvecs.npy"))
+#    allCoords.append(pickle.load(open(s.resultsFolder + "coords.p","rb")))
+#    allOmniAtransA.append(np.load(resultsDirectory + "omniAtransA.npy"))
     allGainVariances.append(np.load(resultsDirectory + "gainVariances.npy"))
-    allNZeroEVs.append(str(np.loadtxt(resultsDirectory + "nZeroEVs.txt")))
+    allNZeroEVs.append(np.loadtxt(resultsDirectory + "nZeroEVs.txt"))
 
     
 
@@ -70,6 +74,7 @@ for result in ResultsToExamine:
 
 plt.close('all')
 for i,folder in enumerate(ResultsToExamine):
+    print "Now plotting results from " + folder
     s = allSpecs[i]
     
     plt.figure(figsize=(14,6))
@@ -80,7 +85,8 @@ for i,folder in enumerate(ResultsToExamine):
   #  plt.scatter(s.antennaPositions[:,0], s.antennaPositions[:,1], c=gainVariances, s=100, norm=matplotlib.colors.LogNorm())
     plt.scatter(s.antennaPositions[:,0], s.antennaPositions[:,1], c=allGainVariances[i], s=100)
     plt.colorbar()
-    print "AtransA has " + allNZeroEVs[i] + " zero eigenvalues."
+    print "AtransA has " + str(allNZeroEVs[i][0]) + " zero eigenvalues."
+    print "BtransB has " + str(allNZeroEVs[i][1]) + " zero eigenvalues."
     datacursor(display='single',formatter="x={x:.2f}\ny={y:.2f}".format)
 
     plt.subplot(1, 2, 2)
@@ -89,4 +95,14 @@ for i,folder in enumerate(ResultsToExamine):
     plt.ylabel('Eigenvalue of $\mathbf{A}^\dagger\mathbf{N}^{-1}\mathbf{A}$',fontsize=16)
     #datacursor(display='single',formatter="N={x:.2f}\nEV={y:.2e}".format)
 
-    
+
+#%% Compare Hex Inriggers to non-hex
+
+allSkyHexIndex = ResultsDict['HERA331_and_Hex_inriggers_low_res_full_sky']
+allSkyInriggerIndex = ResultsDict['HERA331_and_3_inriggers_low_res_full_sky']
+plt.figure()
+plt.semilogy(allnoiseEvals[allSkyInriggerIndex])
+plt.semilogy(allnoiseEvals[allSkyHexIndex])
+plt.xlabel('Eigenvalue Number',fontsize=16)
+plt.ylabel('Eigenvalue of $\mathbf{A}^\dagger\mathbf{N}^{-1}\mathbf{A}$',fontsize=16)
+plt.legend(['3 Single Inriggers', '3 Hex Inriggers'])
