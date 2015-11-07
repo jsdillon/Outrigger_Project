@@ -31,7 +31,7 @@ def HexArray(Separation = 14.6, hexNum = 11,
             xPos = ((-(2*hexNum-abs(row))+2)/2.0 + col)*Separation;
             yPos = row*Separation*3**.5/2;
             positions.append([xPos, yPos, 0])
-
+    nCore = len(positions)
 
     right = Separation*np.asarray([1,0,0])
     up = Separation*np.asarray([0,1,0])
@@ -90,7 +90,7 @@ def HexArray(Separation = 14.6, hexNum = 11,
                     elif redundantPairInriggers:
                         if (xPos**2+yPos**2)**.5 < np.linalg.norm(newCenter): positions.append([xPos, yPos, 0])
                                                     
-    nCore = len(positions)
+
     
     #Outriggers
     if JoshsOutriggers:
@@ -172,7 +172,7 @@ def HexArray(Separation = 14.6, hexNum = 11,
         plt.scatter(np.asarray(positions)[:,0]/Separation,np.asarray(positions)[:,1]/Separation)        
         #datacursor(display='single')
         plt.figure()        
-        plt.scatter(uniqueBaselines[:,0]/1.0/Separation, uniqueBaselines[:,1]/1.0/Separation,c=(redundancy>10 + 1),s=100)
+        plt.scatter(uniqueBaselines[:,0]/1.0/Separation, uniqueBaselines[:,1]/1.0/Separation,c=(redundancy>10 + 1),s=40)
         datacursor(display='single',formatter="x={x:.4f}\ny={y:.4f}".format)
         plt.show()
 
@@ -182,7 +182,7 @@ if __name__ == "__main__":
 #    HexArray(AaronsInriggers = False)
 #    HexArray(hexNum = 7, AaronsOutriggers = True)
 #    HexArray(hexNum = 11, LoadHERAOutriggers = True)
-    HexArray(hexNum = 11, redundantTriangleInriggers = True)
+    HexArray(hexNum = 11, AaronsInriggers = True)
 #    HexArray(hexNum = 11, AaronsInriggers = True)
     
     

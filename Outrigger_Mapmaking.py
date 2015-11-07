@@ -162,7 +162,7 @@ def Outrigger_Mapmaking(testCase = None):
 
 #%%
 if __name__ == "__main__":
-    Outrigger_Mapmaking(testCase = 7)
+    Outrigger_Mapmaking(testCase = 8)
             
 
     
@@ -172,6 +172,10 @@ if __name__ == "__main__":
         #Look at different dithering schemes
     #Examine metrics for calibratability
     #Examine array rotation
+    
+    #calibratibility
+    
+    #invert polarization beams
     
     #Adrian's Idea for the Paper:
     #Intuition/metrics/rules of thumb
