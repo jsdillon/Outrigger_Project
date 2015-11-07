@@ -8,7 +8,7 @@ import numpy as np
 import cPickle as pickle
 import matplotlib
 import matplotlib.pyplot as plt
-from mpldatacursor import datacursor
+#from mpldatacursor import datacursor
 plt.close('all')
 
 def HexArray(Separation = 14.6, hexNum = 11, 
