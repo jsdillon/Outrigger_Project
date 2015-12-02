@@ -30,139 +30,99 @@ def saveQuantitiesForArrayComparison(resultsDirectory):
     print "Now computing other interesting mapmaking and array quantities..."
     s, times, ps, Dmatrix, PSF, coaddedMap, pointSourcePSF = MapMats.loadAllResults(resultsDirectory)
 
+    #Info about calibratability    
     redundantInfo = oi.RedundantInfo()
     reds = oai.compute_reds(s.antennaPositions)
     redundantInfo.init_from_reds(reds, s.antennaPositions)
     AtransA = redundantInfo.At.dot(redundantInfo.At.T).toarray()
     BtransB = redundantInfo.Bt.dot(redundantInfo.Bt.T).toarray()    
     np.save(resultsDirectory + "omniAtransA",AtransA)
+    np.save(resultsDirectory + "omniBtransB",BtransB)
     gainVariances = np.diag(np.linalg.pinv(AtransA)[0:s.nAntennas,0:s.nAntennas])
     gainVariances = gainVariances/gainVariances.min()
     np.save(resultsDirectory + "gainVariances",gainVariances)
-    np.savetxt(resultsDirectory + "nZeroEVs.txt", [len(XtransX) - np.linalg.matrix_rank(XtransX, tol=1e-10) for XtransX in [AtransA, BtransB]], fmt='%.d')    
+    np.savetxt(resultsDirectory + "nZeroEVs.txt", [np.sum(np.abs(np.linalg.eigvals(XtransX)<1e-10)) for XtransX in [AtransA, BtransB]], fmt='%.d')    
+    
     coords = Geometry.Coordinates(s)
-    pickle.dump(coords, open(resultsDirectory + "coords.p","wb"))    
-    mapNoiseCovariance = np.dot(PSF[:,coords.mapIndexLocationsInExtendedIndexList],np.transpose(np.diag(Dmatrix)))
-    AtransNinvA = np.dot(np.diag(Dmatrix**-1),PSF)    
+    if s.useAdaptiveHEALPixForPSF: coords.convertToAdaptiveHEALPix(s, times)
+    print "There are " + str(coords.nPSFPixels) + " pixels in the PSF and " + str(coords.nFacetPixels) + " in the map."
+    pickle.dump(coords, open(resultsDirectory + "coords.p","wb"), protocol = -1)    
+    mapNoiseCovariance = np.dot(PSF[:,coords.facetIndexLocationsInPSFIndexList],np.transpose(np.diag(Dmatrix)))
+    AtransNinvA = np.dot(np.diag(Dmatrix**-1),PSF[:,coords.facetIndexLocationsInPSFIndexList])
+    posVarIndicies = (np.diag(AtransNinvA)>0)
+    AtransNinvA = AtransNinvA[posVarIndicies,:][:,posVarIndicies] #Deal with the fact that if I map the whole sky, some pixels are not sampled.
+    mapNoiseCovariance = mapNoiseCovariance[posVarIndicies,:][:,posVarIndicies]
     evals, evecs = SortedEigensystem(AtransNinvA)
     np.save(resultsDirectory + "mapNoiseCovariance",mapNoiseCovariance)
     np.save(resultsDirectory + "AtransNinvA", AtransNinvA)
     np.save(resultsDirectory + "noiseEvals", evals)
     np.save(resultsDirectory + "noiseEvecs", evecs)
+    np.save(resultsDirectory + "posVarIndicies", posVarIndicies)    
     print "Finished with " + resultsDirectory + "\n\n\n"
-    
+
+
+
+highResMapNSIDE = 256
+allTests = [{'title': 'HERA-331 Full Sky', 'folder': 'HERA331_FullSky/', 
+                 'mapNSIDE': 32, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 
+            {'title': 'HERA-331 + Fiducial Inriggers Full Sky', 'folder': 'HERA331_FidInriggers_FullSky/', 
+                 'fiducialInriggers': True, 'mapNSIDE': 32, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 
+            {'title': 'HERA-331 + 3 Corner Inrigger Pairs Full Sky', 'folder': 'HERA331_3CornerInriggers_FullSky/', 
+                 'halfCornerInriggers': True, 'mapNSIDE': 32, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 
+            {'title': 'HERA-331 + 6 Corner Inrigger Pairs Full Sky', 'folder': 'HERA331_6CornerInriggers_FullSky/', 
+                 'fullCornerInriggers': True, 'mapNSIDE': 32, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 
+            {'title': 'HERA-331 Split Core Full Sky', 'folder': 'HERA331_SplitCore_FullSky/', 'SplitCore': True, 'mapNSIDE': 32, 
+                 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 
+            {'title': 'HERA-331 High-Res', 'folder': 'HERA331_HighRes/', 
+                 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+                         
+            {'title': 'HERA-331 + Fidicuial Outriggers High-Res', 'folder': 'HERA331_FidOutriggers_HighRes/', 
+                 'LoadHERAOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+                 
+            {'title': 'HERA-331 + Redundant Outriggers High-Res', 'folder': 'HERA331_RedOutriggers_HighRes/', 
+                 'RedundantOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+                 
+            {'title': 'HERA-331 + Fidicuial Outriggers + Fidicuial Inriggers High-Res', 'folder': 'HERA331_FidOutriggers_FidInriggers_HighRes/', 
+                 'LoadHERAOutriggers': True, 'fiducialInriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+                 
+            {'title': 'HERA-331 + Redundant Outriggers + 3 Corner Inrigger Pairs High-Res', 'folder': 'HERA331_RedOutriggers_3PairInriggers_HighRes/', 
+                 'RedundantOutriggers': True, 'halfCornerInriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+                 
+            {'title': 'HERA-331 + Redundant Outriggers + 6 Corner Inrigger Pairs High-Res', 'folder': 'HERA331_RedOutriggers_6PairInriggers_HighRes/', 
+                 'RedundantOutriggers': True, 'fullCornerInriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+                 
+            {'title': 'HERA-331 Split Core + Split Outriggers High-Res', 'folder': 'HERA331_SplitCore_SplitOutriggers_HighRes/', 
+                 'SplitCore': True, 'SplitCoreOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2}]
+            
+#TODO: add longer integrations
+#TODO: look at half-wavelength dithering specifically in the N-S direction
+pickle.dump(allTests, open(scriptDirectory + "/Results/allTests.p","wb"))
+
+
+
 def Outrigger_Mapmaking(testCase = None):
     """This function will run either one array configuration, or all of them if testCase == None."""
     
     if len(sys.argv) > 1: testCase = int(sys.argv[1])
     if testCase is None: print "Now working on all array configurations.\n\n"
 
-
-
-    #%% Basic HERA 331
-    if testCase == 0 or testCase == None:
-        HexArray()
-        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
-        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory)
-        saveQuantitiesForArrayComparison(resultsDirectory)
-    
-    
-    #%% HERA 331 + 3 inriggers
-    if testCase == 1 or testCase == None:
-        HexArray(ditheredInriggers=True)
-        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
-        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_3_inriggers/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory)
-        saveQuantitiesForArrayComparison(resultsDirectory)
-    
-    
-    #%% HERA 331 with my outrigger design
-    if testCase == 2 or testCase == None:
-        HexArray(JoshsOutriggers=True)
-        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
-        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_Joshs_outriggers/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory)
-        saveQuantitiesForArrayComparison(resultsDirectory)
-        
-    
-    #%% HERA 331 with my outrigger design and 3 inriggers
-    if testCase == 3 or testCase == None:
-        HexArray(JoshsOutriggers=True,ditheredInriggers=True)
-        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
-        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_Joshs_outriggers_and_3_inriggers/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory)
-        saveQuantitiesForArrayComparison(resultsDirectory)
-    
-    
-    #%% HERA 331 with full sky at NSIDE=16
-    if testCase == 4 or testCase == None:    
-        HexArray()
-        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
-        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_low_res_full_sky/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, 
-                                    facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1)
-        saveQuantitiesForArrayComparison(resultsDirectory)
-        
-    
-    #%% HERA 331 with 3 inriggers and full sky at NSIDE=16
-    if testCase == 5 or testCase == None:    
-        HexArray(ditheredInriggers=True)
-        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
-        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_3_inriggers_low_res_full_sky/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, 
-                                    facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1)                            
-        saveQuantitiesForArrayComparison(resultsDirectory)                                                        
-        
-    
-    #%% HERA 331 with 3 inriggers, my outrigger design, and full sky at NSIDE=16
-    if testCase == 6 or testCase == None:    
-        HexArray(JoshsOutriggers=True,ditheredInriggers=True)
-        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
-        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_Joshs_outriggers_and_3_inriggers_low_res_full_sky/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, 
-                                    facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1)                            
-        saveQuantitiesForArrayComparison(resultsDirectory)          
-
-    #%% HERA 331 with 3 hex inriggers
-    if testCase == 7 or testCase == None:    
-        HexArray(redundantHexInriggers=True)
-        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
-        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_Hex_inriggers/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory)                   
-        saveQuantitiesForArrayComparison(resultsDirectory)          
-
-    #%% HERA 331 with 3 hex inriggers and full sky at NSIDE = 16
-    if testCase == 8 or testCase == None:    
-        HexArray(redundantHexInriggers=True)
-        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
-        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_Hex_inriggers_low_res_full_sky/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, 
-                                    facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1)                            
-        saveQuantitiesForArrayComparison(resultsDirectory)          
-        
-   
-   #%% HERA 331 with 3 hex inriggers and full sky at NSIDE = 16 with array rotation
-#    if testCase == 9 or testCase == None:    
-#        HexArray(redundantHexInriggers=True)
-#        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
-#        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_hex_inriggers_low_res_full_sky_array_rotation/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, 
-#                                    facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1, MaximumAllowedAngleFromFacetCenterToPointingCenter = 5)                            
-#        saveQuantitiesForArrayComparison(resultsDirectory)        
-
-
-    #%% HERA 331 with 3 paired inriggers and full sky at NSIDE = 16
-    if testCase == 10 or testCase == None:    
-        HexArray(redundantPairInriggers=True)
-        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
-        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_paired_inriggers_low_res_full_sky/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, 
-                                    facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1)                            
-        saveQuantitiesForArrayComparison(resultsDirectory)        
-        
-
-    #%% HERA 331 with 3 triangle inriggers and full sky at NSIDE = 16
-    if testCase == 11 or testCase == None:    
-        HexArray(redundantTriangleInriggers=True)
-        SampleObservationDataGenerator(configFile = "outrigger_config.txt")
-        resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/HERA331_and_triangle_inriggers_low_res_full_sky/", configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, 
-                                    facetSize = 180, mapNSIDE = 16, PSFextensionBeyondFacetFactor = 1)                            
-        saveQuantitiesForArrayComparison(resultsDirectory)        
+    for case, test in enumerate(allTests):
+        if case == testCase or testCase is None:
+            HexArray(**test)
+            SampleObservationDataGenerator(configFile = "outrigger_config.txt")
+            resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/" + test['folder'], configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, **test)
+            saveQuantitiesForArrayComparison(resultsDirectory)
 
 
 #%%
 if __name__ == "__main__":
-    Outrigger_Mapmaking(testCase = 8)
+ #   Outrigger_Mapmaking(testCase = 5)
+    Outrigger_Mapmaking()
             
 
     
@@ -184,3 +144,7 @@ if __name__ == "__main__":
         #high resolution
         #beam symmetry for uniform weighted beam
     
+
+# How sample variance limited are we and how much do we buy with the extra modes
+# How good is good enough on the grating lobes
+# 

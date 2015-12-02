@@ -79,15 +79,22 @@ facetRA: 60
 #50.6737
 #266.2417
 facetDec: -30.706267
-facetSize: 20
+facetSize: 10
 SquareFacetInRADec: False
 MaximumAllowedAngleFromFacetCenterToPointingCenter: .03
 
 #MAPMAKING AND PSF SETTINGS
-mapNSIDE: 64
-PSFextensionBeyondFacetFactor = 1
+mapNSIDE: 32
 integrationsPerSnapshot = 1
 PSFforPointSources = false
+PSFextensionBeyondFacetFactor = 1
+#Only relevant if not using adaptive HEALPix
+
+useAdaptiveHEALPixForPSF = true
+adaptiveHEALPixMinNSIDE = 2
+adaptiveHEALPixReferenceFreq = 150
+adaptiveHEALPixBeamPowerScaling = .5
+makeFacetSameAsAdaptivePSF = true
 
 #POLARIZATION SETTINGS
 makeMapOfStokesIOnly: true
