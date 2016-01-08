@@ -15,6 +15,9 @@ import omnical.info as oi
 import omnical.arrayinfo as oai
 import scipy.sparse
 import cPickle as pickle
+import smtplib
+from email.mime.text import MIMEText
+import email.Utils
 
 scriptDirectory = os.path.dirname(os.path.abspath(__file__))
 os.chdir(scriptDirectory)
@@ -160,6 +163,23 @@ allTests = [
 pickle.dump(allTests, open(scriptDirectory + "/Results/allTests.p","wb"))
 
 
+def emailMe(test):
+    fromaddr = 'joshspythonnotifications@gmail.com'
+    toaddrs  = 'jsdillon+python@gmail.com'
+    message = str(test)
+    msg = MIMEText(message)
+    msg['Subject'] = 'Finished test: ' + test['title']
+    msg['Message-id'] = email.Utils.make_msgid()
+    msg['From'] = fromaddr
+    msg['To'] = toaddrs
+    username = 'joshspythonnotifications'
+    password = 'TqU2rLmjPpme9uTHLrn'
+    server = smtplib.SMTP('smtp.gmail.com:587')
+    server.starttls()
+    server.login(username,password)
+    server.sendmail(fromaddr, toaddrs, msg.as_string())
+    server.quit()
+
 
 def Outrigger_Mapmaking(testCase = None):
     """This function will run either one array configuration, or all of them if testCase == None."""
@@ -173,6 +193,7 @@ def Outrigger_Mapmaking(testCase = None):
             SampleObservationDataGenerator(configFile = "outrigger_config.txt")
             resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/" + test['folder'], configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, **test)
             saveQuantitiesForArrayComparison(resultsDirectory)
+            emailMe(test)
 
 
 #%%
