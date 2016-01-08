@@ -39,7 +39,6 @@ def saveQuantitiesForArrayComparison(resultsDirectory):
     np.save(resultsDirectory + "omniAtransA",AtransA)
     np.save(resultsDirectory + "omniBtransB",BtransB)
     gainVariances = np.diag(np.linalg.pinv(AtransA)[0:s.nAntennas,0:s.nAntennas])
-    gainVariances = gainVariances/gainVariances.min()
     np.save(resultsDirectory + "gainVariances",gainVariances)
     np.savetxt(resultsDirectory + "nZeroEVs.txt", [np.sum(np.abs(np.linalg.eigvals(XtransX)<1e-10)) for XtransX in [AtransA, BtransB]], fmt='%.d')    
     
@@ -63,44 +62,101 @@ def saveQuantitiesForArrayComparison(resultsDirectory):
 
 
 highResMapNSIDE = 256
-allTests = [{'title': 'HERA-331 Full Sky', 'folder': 'HERA331_FullSky/', 
-                 'mapNSIDE': 32, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+allTests = [
+#%% Full Sky Single Integration
+            {'title': 'HERA-127 Full Sky', 'folder': 'HERA127_FullSky/', 'hexNum': 7,
+                 'mapNSIDE': 64, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 
+            {'title': 'HERA-331 Full Sky', 'folder': 'HERA331_FullSky/', 
+                 'mapNSIDE': 64, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
                  
             {'title': 'HERA-331 + Fiducial Inriggers Full Sky', 'folder': 'HERA331_FidInriggers_FullSky/', 
-                 'fiducialInriggers': True, 'mapNSIDE': 32, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 'fiducialInriggers': True, 'mapNSIDE': 64, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
                  
-            {'title': 'HERA-331 + 3 Corner Inrigger Pairs Full Sky', 'folder': 'HERA331_3CornerInriggers_FullSky/', 
-                 'halfCornerInriggers': True, 'mapNSIDE': 32, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+#            {'title': 'HERA-331 + 3 Corner Inrigger Pairs Full Sky', 'folder': 'HERA331_3CornerInriggers_FullSky/', 
+#                 'halfCornerInriggers': True, 'mapNSIDE': 64, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
                  
             {'title': 'HERA-331 + 6 Corner Inrigger Pairs Full Sky', 'folder': 'HERA331_6CornerInriggers_FullSky/', 
-                 'fullCornerInriggers': True, 'mapNSIDE': 32, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 'fullCornerInriggers': True, 'mapNSIDE': 64, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
                  
-            {'title': 'HERA-331 Split Core Full Sky', 'folder': 'HERA331_SplitCore_FullSky/', 'SplitCore': True, 'mapNSIDE': 32, 
+            {'title': 'HERA-331 Split Core Full Sky', 'folder': 'HERA331_SplitCore_FullSky/', 'SplitCore': True, 'mapNSIDE': 64, 
                  'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
                  
+            {'title': 'HERA-331 Nine-Way Split Core Full Sky', 'folder': 'HERA331_NineWaySplitCore_FullSky/', 'NineWaySplitCore': True, 'mapNSIDE': 64, 
+                 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 
+#%% Full Sky Multiple Integrations
+            {'title': 'HERA-331 Full Sky Long Integration', 'folder': 'HERA331_FullSky_LongInt/', 
+                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'mapNSIDE': 64, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 
+            {'title': 'HERA-331 + Fiducial Inriggers Full Sky Long Integration', 'folder': 'HERA331_FidInriggers_FullSky_LongInt/', 
+                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'fiducialInriggers': True, 'mapNSIDE': 64, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 
+#            {'title': 'HERA-331 + 3 Corner Inrigger Pairs Full Sky Long Integration', 'folder': 'HERA331_3CornerInriggers_FullSky_LongInt/', 
+#                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'halfCornerInriggers': True, 'mapNSIDE': 64, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 
+            {'title': 'HERA-331 + 6 Corner Inrigger Pairs Full Sky Long Integration', 'folder': 'HERA331_6CornerInriggers_FullSky_LongInt/', 
+                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'fullCornerInriggers': True, 'mapNSIDE': 64, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 
+            {'title': 'HERA-331 Split Core Full Sky Long Integration', 'folder': 'HERA331_SplitCore_FullSky_LongInt/', 
+                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'SplitCore': True, 'mapNSIDE': 64, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+                 
+            {'title': 'HERA-331 Nine-Way Split Core Full Sky Long Integration', 'folder': 'HERA331_NineWaySplitCore_FullSky_LongInt/', 
+                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'NineWaySplitCore': True, 'mapNSIDE': 64, 'useAdaptiveHEALPixForPSF': True, 'facetSize': 10},
+
+#%% High Res Partial Sky
             {'title': 'HERA-331 High-Res', 'folder': 'HERA331_HighRes/', 
                  'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
                          
-            {'title': 'HERA-331 + Fidicuial Outriggers High-Res', 'folder': 'HERA331_FidOutriggers_HighRes/', 
-                 'LoadHERAOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+#            {'title': 'HERA-331 + Fidicuial Outriggers High-Res', 'folder': 'HERA331_FidOutriggers_HighRes/', 
+#                 'LoadHERAOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
                  
-            {'title': 'HERA-331 + Redundant Outriggers High-Res', 'folder': 'HERA331_RedOutriggers_HighRes/', 
-                 'RedundantOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+#            {'title': 'HERA-331 + Redundant Outriggers High-Res', 'folder': 'HERA331_RedOutriggers_HighRes/', 
+#                 'RedundantOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
                  
             {'title': 'HERA-331 + Fidicuial Outriggers + Fidicuial Inriggers High-Res', 'folder': 'HERA331_FidOutriggers_FidInriggers_HighRes/', 
                  'LoadHERAOutriggers': True, 'fiducialInriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
                  
-            {'title': 'HERA-331 + Redundant Outriggers + 3 Corner Inrigger Pairs High-Res', 'folder': 'HERA331_RedOutriggers_3PairInriggers_HighRes/', 
-                 'RedundantOutriggers': True, 'halfCornerInriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+#            {'title': 'HERA-331 + Redundant Outriggers + 3 Corner Inrigger Pairs High-Res', 'folder': 'HERA331_RedOutriggers_3PairInriggers_HighRes/', 
+#                 'RedundantOutriggers': True, 'halfCornerInriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
                  
             {'title': 'HERA-331 + Redundant Outriggers + 6 Corner Inrigger Pairs High-Res', 'folder': 'HERA331_RedOutriggers_6PairInriggers_HighRes/', 
                  'RedundantOutriggers': True, 'fullCornerInriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
                  
             {'title': 'HERA-331 Split Core + Split Outriggers High-Res', 'folder': 'HERA331_SplitCore_SplitOutriggers_HighRes/', 
-                 'SplitCore': True, 'SplitCoreOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2}]
+                 'SplitCore': True, 'SplitCoreOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+
+            {'title': 'HERA-331 Nine-Way Split Core + Split Outriggers High-Res', 'folder': 'HERA331_NineWaySplitCore_SplitOutriggers_HighRes/', 
+                 'NineWaySplitCore': True, 'SplitCoreOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+
+#%% High Res Partial Sky Long Int
+            {'title': 'HERA-331 High-Res Long Integration', 'folder': 'HERA331_HighRes_LongInt/', 
+                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+                         
+#            {'title': 'HERA-331 + Fidicuial Outriggers High-Res Long Integration', 'folder': 'HERA331_FidOutriggers_HighRes_LongInt/', 
+#                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'LoadHERAOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+                 
+#            {'title': 'HERA-331 + Redundant Outriggers High-Res Long Integration', 'folder': 'HERA331_RedOutriggers_HighRes_LongInt/', 
+#                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'RedundantOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+                 
+            {'title': 'HERA-331 + Fidicuial Outriggers + Fidicuial Inriggers High-Res Long Integration', 'folder': 'HERA331_FidOutriggers_FidInriggers_HighRes_LongInt/', 
+                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'LoadHERAOutriggers': True, 'fiducialInriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+                 
+#            {'title': 'HERA-331 + Redundant Outriggers + 3 Corner Inrigger Pairs High-Res Long Integration', 'folder': 'HERA331_RedOutriggers_3PairInriggers_HighRes_LongInt/', 
+#                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'RedundantOutriggers': True, 'halfCornerInriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+                 
+            {'title': 'HERA-331 + Redundant Outriggers + 6 Corner Inrigger Pairs High-Res Long Integration', 'folder': 'HERA331_RedOutriggers_6PairInriggers_HighRes_LongInt/', 
+                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'RedundantOutriggers': True, 'fullCornerInriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+                 
+            {'title': 'HERA-331 Split Core + Split Outriggers High-Res Long Integration', 'folder': 'HERA331_SplitCore_SplitOutriggers_HighRes_LongInt/', 
+                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'SplitCore': True, 'SplitCoreOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2},
+
+            {'title': 'HERA-331 Nine-Way Split Core + Split Outriggers High-Res Long Integration', 'folder': 'HERA331_NineWaySplitCore_SplitOutriggers_HighRes_LongInt/', 
+                 'MaximumAllowedAngleFromFacetCenterToPointingCenter': 5, 'NineWaySplitCore': True, 'SplitCoreOutriggers': True, 'mapNSIDE': highResMapNSIDE, 'useAdaptiveHEALPixForPSF': False, 'facetSize': 10, 'PSFextensionBeyondFacetFactor': 2}]
+
             
-#TODO: add longer integrations
-#TODO: look at half-wavelength dithering specifically in the N-S direction
+
+#TODO: look at half-wavelength dithering specifically in the N-S direction...or extensions to the "paired" inriggers
 pickle.dump(allTests, open(scriptDirectory + "/Results/allTests.p","wb"))
 
 
@@ -110,7 +166,7 @@ def Outrigger_Mapmaking(testCase = None):
     
     if len(sys.argv) > 1: testCase = int(sys.argv[1])
     if testCase is None: print "Now working on all array configurations.\n\n"
-
+    
     for case, test in enumerate(allTests):
         if case == testCase or testCase is None:
             HexArray(**test)
@@ -121,10 +177,16 @@ def Outrigger_Mapmaking(testCase = None):
 
 #%%
 if __name__ == "__main__":
- #   Outrigger_Mapmaking(testCase = 5)
-    Outrigger_Mapmaking()
+    Outrigger_Mapmaking(testCase = 17)    
+    Outrigger_Mapmaking(testCase = 18)
+    Outrigger_Mapmaking(testCase = 19)
+    Outrigger_Mapmaking(testCase = 20)
+#    Outrigger_Mapmaking(testCase = 6)
+#    Outrigger_Mapmaking(testCase = 18)
+#    Outrigger_Mapmaking(testCase = 19)
+  #  Outrigger_Mapmaking()
             
-
+#    plt.hist(
     
     #Future Plans for this:
     #Examine the effect of inriggers on low-resolution

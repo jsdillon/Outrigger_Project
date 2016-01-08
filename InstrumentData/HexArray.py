@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 def HexArray(Separation = 14.6, hexNum = 11, 
              SplitCore = False,
+             NineWaySplitCore = False,
              SplitCoreOutriggers = False,
              JoshsOutriggers = False, 
              RedundantOutriggers = False, 
@@ -28,6 +29,7 @@ def HexArray(Separation = 14.6, hexNum = 11,
     #Calculating Positions:
     #Main Hex
     positions = [];
+#    for row in range(hexNum-1,-(hexNum)+SplitCore,-1):
     for row in range(hexNum-1,-(hexNum),-1):
         for col in range(2*hexNum-abs(row)-1):
             xPos = ((-(2*hexNum-abs(row))+2)/2.0 + col)*Separation;
@@ -51,6 +53,51 @@ def HexArray(Separation = 14.6, hexNum = 11,
                     positions[i] = np.asarray(pos) +upLeft  - (upRight + upLeft)/3
 
 
+
+    if NineWaySplitCore:
+        from sympy.geometry import RegularPolygon, Point, Polygon
+        distances = np.asarray([np.linalg.norm(pos) for pos in positions])
+        fullRadius = np.max(distances)
+        interiorHex = RegularPolygon(Point(0, 0), 1.001*3**-.5*fullRadius, 6)
+        interiorHex.spin(np.pi/6)
+        interiorHex = Polygon(*[Point(vert.x.evalf(), vert.y.evalf()) for vert in interiorHex.vertices])
+
+        positions.remove(positions[76])
+    
+        isInterior = np.zeros(len(positions),dtype=bool)    
+        for i,pos in enumerate(positions):
+            if distances[i] < fullRadius/2.0: isInterior[i] = True
+            elif distances[i] <= 3**-.5*fullRadius and interiorHex.encloses_point(Point(pos[0],pos[1])): isInterior[i] = True
+        
+
+
+
+        v1 = (upRight + upLeft)/3       
+        v2 = right/3
+        
+        for i,pos in enumerate(positions):
+            theta = np.arctan2(pos[1],pos[0])
+            if isInterior[i]:
+                if not (pos[0]==0 and pos[1]==0):
+                    if (theta > -np.pi/3 and theta < np.pi/3): #right
+                        positions[i] = np.asarray(pos) +v1
+                    if (theta >= np.pi/3 and theta < np.pi): #top left
+                        positions[i] = np.asarray(pos) +upLeft  - v1
+            else:
+                if (theta > -np.pi/6 and theta < np.pi/6): #right
+                    positions[i] = np.asarray(pos) + 2*v2
+                if (theta <= -5*np.pi/6 or theta >= 5*np.pi/6): #left
+                    positions[i] = np.asarray(pos) -v2 - right
+                if (theta > -np.pi/2 and theta <= -np.pi/6): #bottom right
+                    positions[i] = np.asarray(pos) -v1 +v2
+                if (theta > -5*np.pi/6 and theta <= -np.pi/2): #bottom left
+                    positions[i] = np.asarray(pos) -v1-v2
+                if (theta >= np.pi/6 and theta < np.pi/2): #top right
+                    positions[i] = np.asarray(pos) + v1 + 2*v2
+                if (theta >= np.pi/2 and theta < 5*np.pi/6): #top left
+                    positions[i] = np.asarray(pos) +v1-2*v2 
+
+    nCore = len(positions)
 
     #Aaron's fiducial inriggers
     if fiducialInriggers:
@@ -95,11 +142,11 @@ def HexArray(Separation = 14.6, hexNum = 11,
     #Redundantly calibratable inriggers with full UV coverage
     if fullCornerInriggers or halfCornerInriggers:
         positions.append(hexNum * (upLeft) + (right + upRight)/3)
-        positions.append(hexNum * (upLeft)  - (right + upRight)/3)
+        positions.append(hexNum * (upLeft) - (right + upRight)/3)
         positions.append(hexNum * (upRight) + (-right + upLeft)/3)
         positions.append(hexNum * (upRight) - (-right + upLeft)/3)
         positions.append(hexNum * (right) + (upRight + upLeft)/3)
-        positions.append(hexNum * (right) - (upRight + upLeft)/3)
+        positions.append(hexNum * (right) - (upRight + upLeft)/3)        
         if fullCornerInriggers:
             positions.append(-(hexNum * (upLeft) + (right + upRight)/3))
             positions.append(-(hexNum * (upLeft)  - (right + upRight)/3))
@@ -107,7 +154,17 @@ def HexArray(Separation = 14.6, hexNum = 11,
             positions.append(-(hexNum * (upRight) - (-right + upLeft)/3))
             positions.append(-(hexNum * (right) + (upRight + upLeft)/3))
             positions.append(-(hexNum * (right) - (upRight + upLeft)/3))
-                           
+
+
+
+    #Half Wavelength Stuff
+#    for i in range(1,14):
+#        positions.append(i*(upLeft + upRight)/27)
+        
+ 
+
+
+#%%    
     
     #Outriggers
     
@@ -161,12 +218,15 @@ def HexArray(Separation = 14.6, hexNum = 11,
             deltax = int(np.round(precisionFactor*(positions[ant1][0]-positions[ant2][0])))
             deltay = int(np.round(precisionFactor*(positions[ant1][1]-positions[ant2][1])))
             deltaz = int(np.round(precisionFactor*(positions[ant1][2]-positions[ant2][2])))
+            if (deltax**2+deltay**2+deltaz**2 < precisionFactor**2*Separation**2): print "WARNING: antennas " + str(ant1) + " and " + str(ant2) + " are too close together!"
             if deltay > 0 or (deltay == 0 and deltax > 0):                
                 baselines.append((deltax, deltay, deltaz))
                 baselinePairs.append((ant1, ant2))
             else:
                 baselines.append((-deltax, -deltay, -deltaz))
                 baselinePairs.append((ant2, ant1))                
+
+    print len(baselinePairs)    
     
     #Calculating Unique Baselines
     baselineDict = {}
@@ -201,21 +261,27 @@ def HexArray(Separation = 14.6, hexNum = 11,
         redundancy = np.append(redundancy, redundancy, axis=0)
         plt.figure(1)
         plt.clf()
-        plt.scatter(np.asarray(positions)[:,0]/Separation,np.asarray(positions)[:,1]/Separation)        
+        plt.scatter(np.asarray(positions)[:,0]/Separation,np.asarray(positions)[:,1]/Separation)
+        plt.axis('equal')
         plt.figure(2)    
         plt.clf()
-        plt.scatter(uniqueBaselines[:,0]/1.0/Separation, uniqueBaselines[:,1]/1.0/Separation,c=np.minimum(redundancy,100000),s=40)
+#        plt.scatter(uniqueBaselines[:,0]/1.0/Separation, uniqueBaselines[:,1]/1.0/Separation,c=np.minimum(redundancy,100000),s=40)
+        plt.scatter(uniqueBaselines[:,0]/1.0/1.5, uniqueBaselines[:,1]/1.0/1.5,c=np.minimum(redundancy,100000),s=40)
         plt.colorbar()
         plt.title('Baseline Redundancy')
         #datacursor(display='single',formatter="x={x:.4f}\ny={y:.4f}".format)
         plt.show()
+        plt.axis('equal')
         return np.asarray(positions)
 
 if __name__ == "__main__":
-    #positions = HexArray(hexNum = 11, RedundantOutriggers = True, fullCornerInriggers = True)
-    positions = HexArray(hexNum = 11, SplitCore = True, SplitCoreOutriggers = True)
-#    positions = HexArray(hexNum = 11, halfCornerInriggers = True)
+ #   positions = HexArray(hexNum = 7, RedundantOutriggers = False, fullCornerInriggers = True)
+#    positions = HexArray(hexNum = 7, SplitCore = False, SplitCoreOutriggers = True)
+#    positions = HexArray(hexNum = 11, NineWaySplitCore = True, SplitCoreOutriggers = True)
+    positions = HexArray(hexNum = 7)
 
+    
+    
     if False:
         import omnical.info as oi
         import omnical.arrayinfo as oai
