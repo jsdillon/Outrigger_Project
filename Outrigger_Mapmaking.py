@@ -192,16 +192,24 @@ def Outrigger_Mapmaking(testCase = None):
             HexArray(**test)
             SampleObservationDataGenerator(configFile = "outrigger_config.txt")
             resultsDirectory = Mapmaker(resultsFolder = scriptDirectory + "/Results/" + test['folder'], configFile = "outrigger_config.txt", mainDirectory = scriptDirectory, **test)
+   
+   #         resultsDirectory = scriptDirectory + '/Results/' + test['folder']
+
             saveQuantitiesForArrayComparison(resultsDirectory)
             emailMe(test)
 
 
 #%%
 if __name__ == "__main__":
-    Outrigger_Mapmaking(testCase = 17)    
     Outrigger_Mapmaking(testCase = 18)
-    Outrigger_Mapmaking(testCase = 19)
-    Outrigger_Mapmaking(testCase = 20)
+    #Outrigger_Mapmaking(testCase = 19)
+    #Outrigger_Mapmaking(testCase = 18)
+    #Outrigger_Mapmaking(testCase = 20)
+    #Outrigger_Mapmaking(testCase = 17)    
+
+
+
+
 #    Outrigger_Mapmaking(testCase = 6)
 #    Outrigger_Mapmaking(testCase = 18)
 #    Outrigger_Mapmaking(testCase = 19)

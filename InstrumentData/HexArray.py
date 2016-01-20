@@ -29,8 +29,8 @@ def HexArray(Separation = 14.6, hexNum = 11,
     #Calculating Positions:
     #Main Hex
     positions = [];
-#    for row in range(hexNum-1,-(hexNum)+SplitCore,-1):
-    for row in range(hexNum-1,-(hexNum),-1):
+    for row in range(hexNum-1,-(hexNum)+SplitCore,-1):
+   # for row in range(hexNum-1,-(hexNum),-1):
         for col in range(2*hexNum-abs(row)-1):
             xPos = ((-(2*hexNum-abs(row))+2)/2.0 + col)*Separation;
             yPos = row*Separation*3**.5/2;
@@ -225,8 +225,6 @@ def HexArray(Separation = 14.6, hexNum = 11,
             else:
                 baselines.append((-deltax, -deltay, -deltaz))
                 baselinePairs.append((ant2, ant1))                
-
-    print len(baselinePairs)    
     
     #Calculating Unique Baselines
     baselineDict = {}
@@ -275,10 +273,11 @@ def HexArray(Separation = 14.6, hexNum = 11,
         return np.asarray(positions)
 
 if __name__ == "__main__":
- #   positions = HexArray(hexNum = 7, RedundantOutriggers = False, fullCornerInriggers = True)
+#    positions = HexArray(hexNum = 11, LoadHERAOutriggers = True, fiducialInriggers = True)
+#    positions = HexArray(hexNum = 11, RedundantOutriggers = False, fullCornerInriggers = False)
 #    positions = HexArray(hexNum = 7, SplitCore = False, SplitCoreOutriggers = True)
-#    positions = HexArray(hexNum = 11, NineWaySplitCore = True, SplitCoreOutriggers = True)
-    positions = HexArray(hexNum = 7)
+    positions = HexArray(hexNum = 11, SplitCore = True, SplitCoreOutriggers = True)
+#    positions = HexArray(hexNum = 6, SplitCore = False, fullCornerInriggers = False)
 
     
     
@@ -291,12 +290,35 @@ if __name__ == "__main__":
         AtransA = redundantInfo.At.dot(redundantInfo.At.T).toarray()
         BtransB = redundantInfo.Bt.dot(redundantInfo.Bt.T).toarray()    
         gainVariances = np.diag(np.linalg.pinv(AtransA)[0:len(positions),0:len(positions)])
-        gainVariances = gainVariances/gainVariances.min()
+#        gainVariances = gainVariances/gainVariances.min()
         print "Gain and phase modes that can't be Omnicaled:"
 #        print [np.sum(np.abs(np.linalg.eigvals(XtransX)<1e-10)) for XtransX in [AtransA, BtransB]]
         print [len(XtransX) - np.linalg.matrix_rank(XtransX, tol=1e-10) for XtransX in [AtransA, BtransB]]
+#%%
         plt.figure(3)
         plt.clf()
         hexScatter = plt.scatter(positions[:,0], positions[:,1], c=np.sqrt(gainVariances), s=100)
         plt.colorbar()
         plt.title('Antenna Relative Gain Errors')
+
+#%%
+
+#        def SortedEigensystem(matrix):
+#            """Returns the eigensystem of the input matrix where eigenvalues and eigenvectors are sorted by descending absolute value."""
+#            evals,evecs = np.linalg.eig(matrix)
+#            indices = np.argsort(np.abs(evals))[::-1]   
+#            return evals[indices], evecs[:,indices]
+#
+#        nthVec = 0
+#        evals, evecs = np.linalg.eig(np.linalg.pinv(AtransA)[0:len(positions),0:len(positions)])
+#        plt.figure(1000)
+#        plt.clf()
+#        hexScatter = plt.scatter(positions[:,0], positions[:,1], c=evecs[0:len(positions),nthVec], s=100)
+#        plt.colorbar()
+#        plt.title(str(nthVec) + 'th eigenvalue: ' + str(evals[nthVec]))
+##        gainErrors1 = np.sqrt(np.diag(np.linalg.pinv(AtransA)[0:len(positions),0:len(positions)]))
+##        gainErrors2 = np.sqrt(np.diag(np.linalg.pinv(AtransA[0:len(positions),0:len(positions)])))
+##        gainErrors3 = np.sqrt(np.diag(np.linalg.pinv(AtransA[0:127,0:127])))
+##        print np.mean(gainErrors1[0:127])
+##        print np.mean(gainErrors2[0:127])
+##        print np.mean(gainErrors3[0:127])
